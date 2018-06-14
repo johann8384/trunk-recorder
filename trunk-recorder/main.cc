@@ -727,7 +727,7 @@ void unit_registration(long unit) {
   unit_affiliations[unit] = 0;
 
   char   shell_command[200];
-  sprintf(shell_command, "radiochange.sh %li on &", unit);
+  sprintf(shell_command, "./radiochange.sh %li on &", unit);
   system(shell_command);
 }
 
@@ -742,13 +742,7 @@ void unit_deregistration(long unit) {
     unit_affiliations[unit] = -1;
   }
   char shell_command[200];
-  sprintf(shell_command, "radiochange.sh %li off &", unit);
-  system(shell_command);
-}
-
-void unit_ack(long unit) {
-  char   shell_command[200];
-  sprintf(shell_command, "radiochange.sh %li ackresp &", unit);
+  sprintf(shell_command, "./radiochange.sh %li off &", unit);
   system(shell_command);
 }
 
@@ -756,7 +750,7 @@ void group_affiliation(long unit, long talkgroup) {
   unit_affiliations[unit] = talkgroup;
 
   char   shell_command[200];
-  sprintf(shell_command, "radiochange.sh %li %li &", unit, talkgroup);
+  sprintf(shell_command, "./radiochange.sh %li change %li &", unit, talkgroup);
   system(shell_command);
 }
 
@@ -767,10 +761,10 @@ void handle_call(TrunkMessage message, System *sys) {
 
   unit_affiliations[message.source] = message.talkgroup;
 
-  /* char   shell_command[200];
-  sprintf(shell_command, "radiochange.sh %li %li &", unit, talkgroup);
+  char   shell_command[200];
+  sprintf(shell_command, "radiochange.sh %li change %li &", unit, talkgroup);
   system(shell_command);
-  int rc = system(shell_command); */
+  int rc = system(shell_command);
 
   for (vector<Call *>::iterator it = calls.begin(); it != calls.end();) {
     Call *call = *it;
