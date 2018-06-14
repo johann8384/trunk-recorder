@@ -232,7 +232,7 @@ void load_config(string config_file)
       BOOST_LOG_TRIVIAL(info) << "API Key: " << system->get_api_key();
 
       system->set_upload_script(node.second.get<std::string>("uploadScript", ""));
-      BOOST_LOG_TRIVIAL(info) << "Upload Script: " << config.upload_script;
+      BOOST_LOG_TRIVIAL(debug) << "Upload Script: " << config.upload_script;
       system->set_call_log(node.second.get<bool>("callLog", true));
       BOOST_LOG_TRIVIAL(info) << "Call Log: " << system->get_call_log();
       system->set_audio_archive(node.second.get<bool>("audioArchive", true));
@@ -682,8 +682,8 @@ bool retune_recorder(TrunkMessage message, Call *call) {
 
   if (call->get_phase2_tdma() != message.phase2_tdma) {
     BOOST_LOG_TRIVIAL(info) << "\t - Retune failed, TDMA Mismatch! ";
-    BOOST_LOG_TRIVIAL(info) << "\t - Message - \tTMDA: " << message.phase2_tdma << " \tSlot: " << message.tdma_slot << "\tCall - \tTMDA: " << call->get_phase2_tdma() << "\tSlot: " << call->get_tdma_slot();
-    BOOST_LOG_TRIVIAL(info) << "\t - Starting a new recording using a new recorder";
+    BOOST_LOG_TRIVIAL(debug) << "\t - Message - \tTMDA: " << message.phase2_tdma << " \tSlot: " << message.tdma_slot << "\tCall - \tTMDA: " << call->get_phase2_tdma() << "\tSlot: " << call->get_tdma_slot();
+    BOOST_LOG_TRIVIAL(debug) << "\t - Starting a new recording using a new recorder";
     return false;
   }
 
@@ -710,7 +710,7 @@ bool retune_recorder(TrunkMessage message, Call *call) {
       return true;
     } else {
       BOOST_LOG_TRIVIAL(info) << "\t - Retune failed, New Freq out of range for Source: " << source->get_device();
-      BOOST_LOG_TRIVIAL(info) << "\t - Starting a new recording using a new source";
+      BOOST_LOG_TRIVIAL(debug) << "\t - Starting a new recording using a new source";
       return false;
     }
   }
@@ -787,7 +787,7 @@ void handle_call(TrunkMessage message, System *sys) {
         if (call->get_state() == recording) {
           // see if we can retune the recorder, sometimes you can't if there are
           // more than one
-          BOOST_LOG_TRIVIAL(info) << "[" << sys->get_short_name() << "]\tTG: " << call->get_talkgroup() << "\tFreq: " << FormatFreq(call->get_freq()) << "\tUpdate Retuning - New Freq: " << FormatFreq(message.freq) << "\tElapsed: " << call->elapsed() << "s \tSince update: " << call->since_last_update() << "s";
+          BOOST_LOG_TRIVIAL(debug) << "[" << sys->get_short_name() << "]\tTG: " << call->get_talkgroup() << "\tFreq: " << FormatFreq(call->get_freq()) << "\tUpdate Retuning - New Freq: " << FormatFreq(message.freq) << "\tElapsed: " << call->elapsed() << "s \tSince update: " << call->since_last_update() << "s";
           int retuned = retune_recorder(message, call);
 
           if (!retuned) {
