@@ -726,48 +726,38 @@ void current_system_status(TrunkMessage message, System *sys) {
 void unit_registration(long unit) {
   unit_affiliations[unit] = 0;
 
-  /* char   shell_command[200];
+  char   shell_command[200];
   sprintf(shell_command, "radiochange.sh %li on &", unit);
   system(shell_command);
-  int rc = system(shell_command); */
-
 }
 
 void unit_deregistration(long unit) {
-  /* std::map<long, long>::iterator it;
+  std::map<long, long>::iterator it;
 
   it = unit_affiliations.find(unit);
 
   if (it != unit_affiliations.end()) {
-    unit_affiliations.erase(it); */
+    unit_affiliations.erase(it);
 
-  unit_affiliations[unit] = -1;
-
-  /* char   shell_command[200];
+    unit_affiliations[unit] = -1;
+  }
+  char shell_command[200];
   sprintf(shell_command, "radiochange.sh %li off &", unit);
   system(shell_command);
-  int rc = system(shell_command); */
-  }
-
-  }
 }
 
 void unit_ack(long unit) {
-  /* char   shell_command[200];
-    sprintf(shell_command, "radiochange.sh %li ackresp &", unit);
-    system(shell_command);
-    int rc = system(shell_command); */
-  }
+  char   shell_command[200];
+  sprintf(shell_command, "radiochange.sh %li ackresp &", unit);
+  system(shell_command);
 }
 
 void group_affiliation(long unit, long talkgroup) {
   unit_affiliations[unit] = talkgroup;
 
-  /* char   shell_command[200];
+  char   shell_command[200];
   sprintf(shell_command, "radiochange.sh %li %li &", unit, talkgroup);
   system(shell_command);
-  int rc = system(shell_command); */
-
 }
 
 void handle_call(TrunkMessage message, System *sys) {
@@ -897,6 +887,7 @@ void handle_message(std::vector<TrunkMessage>messages, System *sys) {
       break;
 
     case REGISTRATION:
+      unit_registration(message.source);
       break;
 
     case DEREGISTRATION:
@@ -912,10 +903,6 @@ void handle_message(std::vector<TrunkMessage>messages, System *sys) {
 
     case STATUS:
       current_system_status(message, sys);
-      break;
-
-    case ACKRESP:
-      unit_ack(message.source);
       break;
 
     case UNKNOWN:
