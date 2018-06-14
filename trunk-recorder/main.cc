@@ -73,6 +73,8 @@
 #include <gnuradio/gr_complex.h>
 #include <gnuradio/top_block.h>
 #include "formatter.h"
+#include "units/Units.h"
+#include "units/UnitState.h"
 
 using namespace std;
 namespace logging  = boost::log;
@@ -84,6 +86,7 @@ int Recorder::rec_counter = 0;
 std::vector<Source *> sources;
 std::vector<System *> systems;
 std::map<long, long>  unit_affiliations;
+Units *units;
 
 std::vector<Call *> calls;
 gr::top_block_sptr  tb;
@@ -723,34 +726,38 @@ void current_system_status(TrunkMessage message, System *sys) {
   }
 }
 
-void unit_registration(long unit) {
-  unit_affiliations[unit] = 0;
+void unit_registration(long unit_id) {
+  Unit unit = new Unit(unit_id, UnitState.on, nullptr);
+  unit_affiliations[unit_id] = 0;
 
   char   shell_command[200];
-  sprintf(shell_command, "./radiochange.sh %li on &", unit);
+  sprintf(shell_command, "./radiochange.sh %li on &", unit_id);
   system(shell_command);
 }
 
-void unit_deregistration(long unit) {
+void unit_deregistration(long unit_id) {
+  units->update_state(unit_id, UnitState.off);
+
   std::map<long, long>::iterator it;
 
-  it = unit_affiliations.find(unit);
+  it = unit_affiliations.find(unit_id);
 
   if (it != unit_affiliations.end()) {
     unit_affiliations.erase(it);
 
-    unit_affiliations[unit] = -1;
+    unit_affiliations[unit_id] = -1;
   }
   char shell_command[200];
-  sprintf(shell_command, "./radiochange.sh %li off &", unit);
+  sprintf(shell_command, "./radiochange.sh %li off &", unit_id);
   system(shell_command);
 }
 
-void group_affiliation(long unit, long talkgroup) {
-  unit_affiliations[unit] = talkgroup;
+void group_affiliation(long unit_id, Talkgroup *talkgroup) {
+  units->update_talkgroup(unit_id,  talkgroup);
+  unit_affiliations[unit] = talkgroup->number;
 
   char   shell_command[200];
-  sprintf(shell_command, "./radiochange.sh %li change %li &", unit, talkgroup);
+  sprintf(shell_command, "./radiochange.sh %li change %li &", unit_id, talkgroup->number);
   system(shell_command);
 }
 
@@ -761,10 +768,8 @@ void handle_call(TrunkMessage message, System *sys) {
 
   unit_affiliations[message.source] = message.talkgroup;
 
-  char   shell_command[200];
-  sprintf(shell_command, "radiochange.sh %li change %li &", unit, talkgroup);
-  system(shell_command);
-  int rc = system(shell_command);
+  units->update_state(message.source, UnitState.associated);
+  units->update_talkgroup(message.source, sys->find_talkgroup(message.talkgroup));
 
   for (vector<Call *>::iterator it = calls.begin(); it != calls.end();) {
     Call *call = *it;
@@ -889,7 +894,7 @@ void handle_message(std::vector<TrunkMessage>messages, System *sys) {
       break;
 
     case AFFILIATION:
-      group_affiliation(message.source, message.talkgroup);
+        group_affiliation(message.source, sys->find_talkgroup(message.talkgroup));
       break;
 
     case SYSID:
@@ -1275,7 +1280,7 @@ int main(int argc, char **argv)
   msg_queue       = gr::msg_queue::make(100);
   smartnet_parser = new SmartnetParser(); // this has to eventually be generic;
   p25_parser      = new P25Parser();
-
+  units           = new Units();
 
   std::string uri = "ws://localhost:3005";
 
