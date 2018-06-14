@@ -736,7 +736,7 @@ void unit_registration(long unit_id) {
 }
 
 void unit_deregistration(long unit_id) {
-  units->update_state(unit_id, UnitState.off);
+  units->update_state(unit_id, off);
 
   std::map<long, long>::iterator it;
 
@@ -754,7 +754,7 @@ void unit_deregistration(long unit_id) {
 
 void group_affiliation(long unit_id, Talkgroup *talkgroup) {
   units->update_talkgroup(unit_id,  talkgroup);
-  unit_affiliations[unit] = talkgroup->number;
+  unit_affiliations[unit_id] = talkgroup->number;
 
   char   shell_command[200];
   sprintf(shell_command, "./radiochange.sh %li change %li &", unit_id, talkgroup->number);
@@ -768,7 +768,7 @@ void handle_call(TrunkMessage message, System *sys) {
 
   unit_affiliations[message.source] = message.talkgroup;
 
-  units->update_state(message.source, UnitState.associated);
+  units->update_state(message.source, associated);
   units->update_talkgroup(message.source, sys->find_talkgroup(message.talkgroup));
 
   for (vector<Call *>::iterator it = calls.begin(); it != calls.end();) {
