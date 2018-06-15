@@ -727,7 +727,7 @@ void current_system_status(TrunkMessage message, System *sys) {
 }
 
 void unit_registration(long unit_id) {
-  units.add(unit_id, on, nullptr);
+  units->add(unit_id, on, nullptr);
   unit_affiliations[unit_id] = 0;
 
   char   shell_command[200];
