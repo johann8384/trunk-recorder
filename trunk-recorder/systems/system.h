@@ -7,6 +7,7 @@
 #include "smartnet_trunking.h"
 #include "p25_trunking.h"
 #include "parser.h"
+#include "../units/Units.h"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
@@ -42,6 +43,7 @@ public:
         enum TalkgroupDisplayFormat { talkGroupDisplayFormat_id=0, talkGroupDisplayFormat_id_tag=1, talkGroupDisplayFormat_tag_id=2};
 
         Talkgroups *talkgroups;
+        Units *units;
         p25p2_lfsr *lfsr;
         Source *source;
         std::string talkgroups_file;

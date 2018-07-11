@@ -8,6 +8,7 @@
 #include "../talkgroup.h"
 #include "UnitState.h"
 #include "../state.h"
+#include <string>
 
 class Unit {
 public:
@@ -24,6 +25,8 @@ public:
   Talkgroup *getTalkgroup() const;
 
   void setTalkgroup(Talkgroup *talkgroup);
+
+  std::string unit();
 
 private:
   long id;

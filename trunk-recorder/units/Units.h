@@ -15,10 +15,20 @@ class Units {
 
 public:
   Units();
+
   Unit *find_unit(long id);
+
   void add(long id, UnitState state, Talkgroup *talkgroup);
+
   void update_state(long id, UnitState state);
+
   void update_talkgroup(long id, Talkgroup *talkgroup);
+
+  void registration(long unit_id);
+
+  void deregistration(long unit_id);
+
+  void affiliation(long unit_id, Talkgroup *talkgroup);
 };
 
 #endif //TRUNK_RECORDER_UNITS_H

@@ -25,8 +25,6 @@ void System::set_upload_script(std::string script) {
   this->upload_script = script;
 }
 
-
-
 System::System(int sys_num) {
   this->sys_num = sys_num;
   sys_id = 0;

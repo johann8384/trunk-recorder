@@ -2,6 +2,7 @@
 // Created by Jonathan Creasy on 6/14/18.
 //
 
+#include <boost/log/trivial.hpp>
 #include "Unit.h"
 
 Unit::Unit(long id, UnitState state, Talkgroup *talkgroup) : id(id), state(state), talkgroup(talkgroup) {
@@ -32,4 +33,13 @@ Talkgroup *Unit::getTalkgroup() const {
 
 void Unit::setTalkgroup(Talkgroup *talkgroup) {
   Unit::talkgroup = talkgroup;
+}
+
+std::string Unit::unit() {
+  std::string unit =
+      R"({ "id": ")" + std::to_string(this->id) +
+      R"(", "state": ")" + UnitStates[this->getState()] +
+      R"(", "talkgroup": ")" + this->talkgroup->alpha_tag +
+      "\"}";
+  return unit;
 }

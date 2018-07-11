@@ -149,8 +149,7 @@ void load_config(string config_file)
     boost::property_tree::read_json(config_file, pt);
 
     BOOST_LOG_TRIVIAL(info) << "\n-------------------------------------\nSYSTEMS\n-------------------------------------\n" << sys_count;
-    BOOST_FOREACH(boost::property_tree::ptree::value_type  & node,
-                  pt.get_child("systems"))
+    BOOST_FOREACH(boost::property_tree::ptree::value_type  & node, pt.get_child("systems"))
     {
       // each system should have a unique index value;
       System *system = new System(sys_count++);
@@ -727,17 +726,10 @@ void current_system_status(TrunkMessage message, System *sys) {
 }
 
 void unit_registration(long unit_id) {
-  units->add(unit_id, on, nullptr);
   unit_affiliations[unit_id] = 0;
-
-  char   shell_command[200];
-  sprintf(shell_command, "./radiochange.sh %li on &", unit_id);
-  system(shell_command);
 }
 
 void unit_deregistration(long unit_id) {
-  units->update_state(unit_id, off);
-
   std::map<long, long>::iterator it;
 
   it = unit_affiliations.find(unit_id);
@@ -747,18 +739,10 @@ void unit_deregistration(long unit_id) {
 
     unit_affiliations[unit_id] = -1;
   }
-  char shell_command[200];
-  sprintf(shell_command, "./radiochange.sh %li off &", unit_id);
-  system(shell_command);
 }
 
 void group_affiliation(long unit_id, Talkgroup *talkgroup) {
-  units->update_talkgroup(unit_id,  talkgroup);
   unit_affiliations[unit_id] = talkgroup->number;
-
-  char   shell_command[200];
-  sprintf(shell_command, "./radiochange.sh %li change %li &", unit_id, talkgroup->number);
-  system(shell_command);
 }
 
 void handle_call(TrunkMessage message, System *sys) {
@@ -768,15 +752,17 @@ void handle_call(TrunkMessage message, System *sys) {
 
   unit_affiliations[message.source] = message.talkgroup;
 
-  units->update_state(message.source, associated);
-  units->update_talkgroup(message.source, sys->find_talkgroup(message.talkgroup));
+  sys->units->update_state(message.source, associated);
+  sys->units->update_talkgroup(message.source, sys->find_talkgroup(message.talkgroup));
+
+  BOOST_LOG_TRIVIAL(info) << "[" << sys->get_short_name() << "]\tUnit: " <<  sys->units->find_unit(message.source)->unit() << " Starting Call on: " << sys->find_talkgroup(message.talkgroup)->alpha_tag;
 
   for (vector<Call *>::iterator it = calls.begin(); it != calls.end();) {
     Call *call = *it;
 
     // This should help detect 2 calls being listed for the same tg
     if (call_found && (call->get_talkgroup() == message.talkgroup) && (call->get_sys_num() == message.sys_num)) {
-      BOOST_LOG_TRIVIAL(info) << "\tALERT! Update - Total calls: " <<  calls.size() << "\tTalkgroup: " << message.talkgroup << "\tOld Freq: " <<  call->get_freq() << "\tNew Freq: " << message.freq;
+      BOOST_LOG_TRIVIAL(debug) << "\tALERT! Update - Total calls: " <<  calls.size() << "\tTalkgroup: " << message.talkgroup << "\tOld Freq: " <<  call->get_freq() << "\tNew Freq: " << message.freq;
     }
 
     if ((call->get_talkgroup() == message.talkgroup) && (call->get_sys_num() == message.sys_num)) {
@@ -835,14 +821,11 @@ void handle_call(TrunkMessage message, System *sys) {
 void unit_check() {
   std::map<long, long> talkgroup_totals;
   std::map<long, long>::iterator it;
-  char   shell_command[200];
-  time_t starttime = time(NULL);
-  tm    *ltm       = localtime(&starttime);
   char   unit_filename[160];
 
   std::stringstream path_stream;
 
-  path_stream << config.capture_dir; //<< boost::filesystem::current_path().string() <<  "/" << 1900 +  ltm->tm_year << "/" << 1 + ltm->tm_mon << "/" << ltm->tm_mday;
+  path_stream << config.capture_dir;
 
   boost::filesystem::create_directories(path_stream.str());
 
@@ -863,9 +846,6 @@ void unit_check() {
       }
       myfile << "\"" << it->first << "\":" << it->second;
     }
-    //sprintf(shell_command, "./unit_check.sh %s > /dev/null 2>&1 &", unit_filename);
-    //system(shell_command);
-    //int rc = system(shell_command);
     myfile << "}";
     myfile.close();
   }
@@ -886,15 +866,18 @@ void handle_message(std::vector<TrunkMessage>messages, System *sys) {
       break;
 
     case REGISTRATION:
+      sys->units->registration(message.source);
       unit_registration(message.source);
       break;
 
     case DEREGISTRATION:
+      sys->units->deregistration(message.source);
       unit_deregistration(message.source);
       break;
 
     case AFFILIATION:
-        group_affiliation(message.source, sys->find_talkgroup(message.talkgroup));
+      sys->units->affiliation(message.source, sys->find_talkgroup(message.talkgroup));
+      group_affiliation(message.source, sys->find_talkgroup(message.talkgroup));
       break;
 
     case SYSID:
@@ -905,6 +888,7 @@ void handle_message(std::vector<TrunkMessage>messages, System *sys) {
       break;
 
     case UNKNOWN:
+      BOOST_LOG_TRIVIAL(info) << "Unknown Message Type: " << message.message_type;
       break;
     }
   }
@@ -1040,14 +1024,6 @@ void monitor_messages() {
           handle_message(trunk_messages, sys);
         }
       }
-
-      /*
-              if ((currentTime - lastUnitCheckTime) >= 300.0) {
-                  unit_check();
-                  lastUnitCheckTime = currentTime;
-              }
-       */
-
       msg.reset();
     } else {
       currentTime = time(NULL);

@@ -46,3 +46,27 @@ void Units::update_talkgroup(long id, Talkgroup *talkgroup) {
     }
   }
 }
+
+void Units::registration(long unit_id) {
+  this->add(unit_id, on, nullptr);
+
+  char shell_command[200];
+  sprintf(shell_command, "./radiochange.sh %li on &", unit_id);
+  system(shell_command);
+}
+
+void Units::deregistration(long unit_id) {
+  this->update_state(unit_id, off);
+
+  char shell_command[200];
+  sprintf(shell_command, "./radiochange.sh %li off &", unit_id);
+  system(shell_command);
+}
+
+void Units::affiliation(long unit_id, Talkgroup *talkgroup) {
+  this->update_talkgroup(unit_id, talkgroup);
+
+  char shell_command[200];
+  sprintf(shell_command, "./radiochange.sh %li change %li &", unit_id, talkgroup->number);
+  system(shell_command);
+}
